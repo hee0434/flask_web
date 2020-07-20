@@ -4,11 +4,23 @@ app = Flask(__name__)  #app이라는 flask객체를 생성 (이 안에는 member
 app.debug=True
 
 
-@app.route('/data')
+@app.route('/')
 def index():
     print("Success")
     # return "TEST"
-    return render_template('home.html')
+    return render_template('home.html', hello="GaryKim")
+
+@app.route('/about')
+def about():
+    print("Success")
+    # return "TEST"
+    return render_template('about.html', hello="GaryKim")
+
+@app.route('/articles')
+def articles():
+    print("Success")
+    # return "TEST"
+    return render_template('articles.html', hello="GaryKim")
 
 
 if __name__=='__main__':      #서버 띄우는 명칭
