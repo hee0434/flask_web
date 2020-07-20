@@ -9,13 +9,13 @@ def index():
     # return "TEST"
     return render_template('home.html',hello="GaryKim")
 
-@app.route('/about')
+@app.route('/about', methods =['GET', 'POST'])]
 def about():
     print("Success")
     # return "TEST"
     return render_template('about.html',hello="GaryKim")
 
-@app.route('/articles')
+@app.route('/articles', methods =['GET', 'POST'])]
 def articles():
     print("Success")
     # return "TEST"
