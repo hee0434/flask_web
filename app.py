@@ -32,8 +32,10 @@ def show_image():
 @app.route('/article/<int:id>')
 def article(id):
     print(id)
-    articles = Articles()
-    return render_template('article.html' , data=[articles , id])
+    articles = Articles()[id-1]
+    print(articles)
+    return render_template('article.html' , data=articles)
+    #return "Sucess"
 
 
 if __name__=='__main__':      #서버 띄우는 명칭
