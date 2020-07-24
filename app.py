@@ -3,6 +3,8 @@ from flask import Flask ,render_template , flash , redirect , url_for, session, 
 import pymysql
 from passlib.hash import pbkdf2_sha256
 from data import Articles
+from functools import wraps
+
 
 app = Flask(__name__)
 app.debug=True
@@ -23,19 +25,21 @@ db = pymysql.connect(host='localhost',
 # print(users)
 # print(result)
 
-@app.route('/')
-def index():
-    print("Success")
-    # return "TEST"
-    return render_template('home.html',hello="GaryKim")
+def is_logged_out(f):
+    @wraps(f)
+    def wrap(*args, **kwargs):
+        if 'is_logged' in session:
+        # if session['is_logged']:
+            return redirect(url_for('articles'))
+        else:
+            return f(*args, **kwargs)
 
-@app.route('/about')
-def about():
-    print("Success")
-    # return "TEST"
-    return render_template('about.html',hello="GaryKim")
+
+    return wrap
+
 
 @app.route('/register',methods=['GET' ,'POST'])
+@is_logged_out
 def register():
     if request.method == 'POST':
 
@@ -72,9 +76,10 @@ def register():
 
 
 @app.route('/login',methods=['GET', 'POST'])
+@is_logged_out
 def login():
     if request.method == 'POST':
-        id = request.form('email')
+        id = request.form['email']
         pw = request.form.get('password')
         print([id])
 
@@ -88,14 +93,58 @@ def login():
             return redirect(url_for('login'))
         else:
             if pbkdf2_sha256.verify(pw,users[4] ):
+                session['is_logged'] = True
+                session ['username'] = users[3]
+                print(session)
                 return redirect(url_for('articles'))
             else:
                 return redirect(url_for('login'))
-        
+
+
+    
     else:
         return render_template('login.html')
 
+def is_logged_in(f):
+    @wraps(f)
+    def _wraper(*args, **kwargs):
+        if 'is_logged' in session:
+        # if session['is_logged']:
+            return f(*args, **kwargs)
+
+        else:
+            flash('UnAuthorized , Please login', 'danger')
+            return redirect(url_for('login'))
+
+    return _wraper
+
+@app.route('/logout')
+@is_logged_in
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+
+
+@app.route('/')
+@is_logged_in
+def index():
+    print("Success")
+    # session['test'] = "Gary Kim"
+    # session_data = session
+    # print(session_data)
+    # return "TEST"
+    return render_template('home.html')
+
+@app.route('/about')
+def about():
+    print("Success")
+    # return "TEST"
+    return render_template('about.html',hello="GaryKim")
+
+
 @app.route('/articles')
+@is_logged_in
 def articles():
     # articles = Articles()
     # print(len(articles))
@@ -109,6 +158,7 @@ def articles():
     #return "GET Success"
 
 @app.route('/article/<string:id>')
+@is_logged_in
 def article(id):
     # print(type(id))
     # articles= Articles()[id-1]
@@ -121,6 +171,7 @@ def article(id):
     # return "Success"
 
 @app.route('/add_articles',methods=['GET','POST'])
+@is_logged_in
 def add_articles():
     if request.method == 'POST':
         # print(request.form['title'])
@@ -141,6 +192,7 @@ def add_articles():
 
 
 @app.route('/article/<string:id>/edit_article',methods=['GET', 'POST'])
+@is_logged_in
 def edit_article(id):
     if request.method =="POST":
         title = request.form['title']
@@ -164,6 +216,7 @@ def edit_article(id):
         
 
 @app.route('/delete/<string:id>', methods=['POST'])
+@is_logged_in
 def delete(id):
     cursor = db.cursor()
     sql = 'DELETE FROM `topic` WHERE  `id`=%s;'
@@ -175,7 +228,12 @@ def delete(id):
 
 if __name__=='__main__':      #서버 띄우는 명칭
     #app.run(host='0.0.0.0', port='8080')      #빈칸이면 5000
+    #session 실행시 필요한 설정
+    app.secret_key = 'secretkey123456789'
+    #서버실행
     app.run()
 
 
 #서버를 띄우는 기본
+
+
